@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SETT Telemetri - Pit Dashboard</title>
+  <link rel="stylesheet" href="index.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+</head>
+<body>
+  <!-- ===== TOP BAR ===== -->
+  <header id="top-bar">
+    <div class="top-bar-left">
+      <h1 class="app-title">SETT<span class="title-accent">TELEMETRİ</span></h1>
+      <div id="simulation-badge" class="badge badge-simulation hidden">SİMÜLASYON MODU</div>
+    </div>
+    <div class="top-bar-center">
+      <div class="status-group">
+        <div class="status-item" id="status-connection">
+          <span class="status-dot offline" id="conn-dot"></span>
+          <span class="status-label" id="conn-label">Bağlantı Yok</span>
+        </div>
+        <div class="status-item" id="status-rate">
+          <span class="status-icon">📡</span>
+          <span id="packet-rate">0</span> Hz
+        </div>
+        <div class="status-item" id="status-rssi">
+          <span class="status-icon">📶</span>
+          <span id="rssi-value">--</span> dBm
+        </div>
+        <div class="status-item" id="status-datasource" style="display: none;">
+          <span class="status-icon">📦</span>
+          <span id="datasource-value">--</span>
+        </div>
+      </div>
+    </div>
+    <div class="top-bar-right">
+      <div class="status-item recording-status hidden" id="recording-status">
+        <span class="recording-dot"></span>
+        <span id="recording-label">REC</span>
+        <span id="recording-time">00:00</span>
+      </div>
+      <span class="clock" id="clock"></span>
+    </div>
+  </header>
+
+  <!-- ===== MAIN CONTENT ===== -->
+  <main id="main-content">
+    <!-- LEFT SIDEBAR: Connection & Controls -->
+    <aside id="sidebar">
+      <!-- Connection Panel -->
+      <section class="panel" id="connection-panel">
+        <h2 class="panel-title">Bağlantı</h2>
+        <div class="form-group">
+          <label for="port-select">COM Port</label>
+          <div class="select-row">
+            <select id="port-select"><option value="">Port seçin...</option></select>
+            <button id="btn-refresh-ports" class="btn-icon" title="Portları Yenile">🔄</button>
+          </div>
+        </div>
+        <div class="form-group">
+          <label for="baud-select">Baud Rate</label>
+          <select id="baud-select"></select>
+        </div>
+        <button id="btn-connect" class="btn btn-primary">Bağlan</button>
+        <div class="divider"></div>
+        <button id="btn-simulation" class="btn btn-secondary">Simülasyon Başlat</button>
+      </section>
+
+      <!-- Logging Panel -->
+      <section class="panel" id="logging-panel">
+        <h2 class="panel-title">Veri Kaydı</h2>
+        <button id="btn-log" class="btn btn-accent">Kayda Başla</button>
+        <div class="log-info hidden" id="log-info">
+          <div class="log-info-row"><span>Dosya:</span><span id="log-filename" class="mono">--</span></div>
+          <div class="log-info-row"><span>Paket:</span><span id="log-packets" class="mono">0</span></div>
+          <div class="log-info-row"><span>Süre:</span><span id="log-duration" class="mono">00:00</span></div>
+        </div>
+      </section>
+
+      <!-- Warnings Panel -->
+      <section class="panel" id="warnings-panel">
+        <h2 class="panel-title">Uyarılar <span class="warning-count" id="warning-count">0</span></h2>
+        <div id="warning-list" class="warning-list">
+          <div class="no-warnings">Aktif uyarı yok</div>
+        </div>
+      </section>
+    </aside>
+
+    <!-- CENTER: Dashboard -->
+    <section id="dashboard">
+      <!-- Row 1: Big Values -->
+      <div class="dash-row dash-row-hero">
+        <div class="dash-card card-rpm" id="card-rpm">
+          <div class="card-label">RPM</div>
+          <div class="card-value" id="val-rpm">0</div>
+          <div class="card-bar"><div class="card-bar-fill" id="bar-rpm"></div></div>
+        </div>
+        <div class="dash-card card-speed" id="card-speed">
+          <div class="card-label">HIZI (km/h)</div>
+          <div class="card-value" id="val-speed">0</div>
+        </div>
+        <div class="dash-card card-gear" id="card-gear">
+          <div class="card-label">VİTES</div>
+          <div class="card-value card-value-giant" id="val-gear">N</div>
+        </div>
+      </div>
+
+      <!-- Row 2: Engine Data -->
+      <div class="dash-row dash-row-engine">
+        <div class="dash-card card-sm" id="card-tps">
+          <div class="card-label">TPS (%)</div>
+          <div class="card-value" id="val-tps">0</div>
+          <div class="card-bar"><div class="card-bar-fill bar-tps" id="bar-tps"></div></div>
+        </div>
+        <div class="dash-card card-sm" id="card-map">
+          <div class="card-label">MAP (kPa)</div>
+          <div class="card-value" id="val-map">0</div>
+        </div>
+        <div class="dash-card card-sm" id="card-afr">
+          <div class="card-label">AFR</div>
+          <div class="card-value" id="val-afr">--</div>
+        </div>
+        <div class="dash-card card-sm" id="card-clt">
+          <div class="card-label">CLT (°C)</div>
+          <div class="card-value" id="val-clt">--</div>
+        </div>
+        <div class="dash-card card-sm" id="card-iat">
+          <div class="card-label">IAT (°C)</div>
+          <div class="card-value" id="val-iat">--</div>
+        </div>
+      </div>
+
+      <!-- Row 3: Status Cards -->
+      <div class="dash-row dash-row-status">
+        <div class="dash-card card-status" id="card-battery">
+          <div class="card-label">AKÜ (V)</div>
+          <div class="card-value" id="val-battery">--</div>
+          <div class="card-status-icon" id="icon-battery">🔋</div>
+        </div>
+        <div class="dash-card card-status" id="card-brake">
+          <div class="card-label">FREN</div>
+          <div class="card-value" id="val-brake">--</div>
+          <div class="card-status-icon" id="icon-brake">🅿️</div>
+        </div>
+        <div class="dash-card card-status" id="card-oil">
+          <div class="card-label">YAĞ BASINÇ</div>
+          <div class="card-value" id="val-oil">--</div>
+          <div class="card-status-icon" id="icon-oil">🛢️</div>
+        </div>
+        <div class="dash-card card-status" id="card-counter">
+          <div class="card-label">PAKET #</div>
+          <div class="card-value mono" id="val-counter">0</div>
+        </div>
+        <div class="dash-card card-status" id="card-loss">
+          <div class="card-label">KAYIP (%)</div>
+          <div class="card-value mono" id="val-loss">0</div>
+        </div>
+      </div>
+
+      <!-- Row 4: Raw Monitor -->
+      <div class="dash-row dash-row-raw">
+        <section class="panel raw-panel" id="raw-monitor-panel">
+          <div class="raw-header">
+            <h2 class="panel-title">Ham Veri Monitörü</h2>
+            <div class="raw-controls">
+              <label class="checkbox-label"><input type="checkbox" id="raw-autoscroll" checked> Otomatik Kaydır</label>
+              <button id="btn-raw-clear" class="btn-icon" title="Temizle">🗑️</button>
+            </div>
+          </div>
+          <div id="raw-monitor" class="raw-monitor"><div class="raw-line raw-placeholder">Veri bekleniyor...</div></div>
+        </section>
+      </div>
+    </section>
+  </main>
+
+  <script src="renderer.js"></script>
+</body>
+</html>

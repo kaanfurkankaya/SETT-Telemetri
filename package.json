@@ -1,0 +1,17 @@
+{
+  "name": "sett-telemetri",
+  "version": "1.0.0",
+  "description": "SETT-SAU Formula Student Pit Telemetry Application",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "dev": "electron . --dev"
+  },
+  "author": "SETT-SAU Formula Team",
+  "license": "MIT",
+  "dependencies": {
+    "electron": "^28.0.0",
+    "serialport": "^12.0.0"
+  },
+  "devDependencies": {}
+}
