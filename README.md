@@ -4,15 +4,9 @@ SETT-SAU Formula Student takımının pit tarafında kullandığı Electron taba
 
 Araç üzerindeki ESP32 telemetri kartı CAN/sensör verilerini E220 LoRa modülü ile pit tarafına gönderir. Pit tarafındaki ESP32 alıcı kart bu veriyi USB seri port üzerinden uygulamaya aktarır. Uygulama canlı değerleri gösterir, uyarıları takip eder ve oturumları CSV olarak kaydeder.
 
-## Ekran Görüntüleri
+## Ekran Görüntüsü
 
-### Ana ekran
-
-<img src="Ana.png" alt="SETT Telemetri ana ekran" width="100%">
-
-### Simülasyon modu
-
-<img src="sim.png" alt="SETT Telemetri simülasyon modu" width="100%">
+<img src="YeniFoto.png" alt="SETT Telemetri güncel arayüz" width="100%">
 
 ## Bağlantılı Repo
 
@@ -72,6 +66,14 @@ npm run dev
 
 Simülasyon TPS, RPM, hız, AFR, CLT, IAT, MAP ve akü değerlerini birbirine bağlı şekilde üretir. Belirli aralıklarla düşük akü, yüksek sıcaklık ve benzeri uyarı senaryoları da denenir. Varsayılan hız 10 Hz'dir.
 
+### Canlı grafikler
+
+Dashboard'daki `Canlı Grafikler` bölümü son 60 saniyelik telemetri geçmişini çizgi grafik olarak gösterir.
+
+- RPM, hız, CLT, akü, RSSI ve paket kaybı aynı ekranda izlenir.
+- Grafikler gerçek seri port, simülasyon ve CSV replay verisinde aynı şekilde çalışır.
+- Test sırasında ani kopma, hararet yükselişi veya batarya düşüşü tek anlık sayı yerine zaman içindeki eğilimiyle görülebilir.
+
 ### Gerçek ESP32 ile kullanım
 
 1. Pit alıcı ESP32 kartını USB ile bilgisayara bağlayın.
@@ -87,6 +89,17 @@ Simülasyon TPS, RPM, hız, AFR, CLT, IAT, MAP ve akü değerlerini birbirine ba
 2. Kayıtlar `logs/` klasörüne CSV olarak yazılır.
 3. `Kaydı Durdur` ile oturumu bitirin.
 4. CSV dosyaları Excel, Python/pandas veya MATLAB ile analiz edilebilir.
+
+### CSV replay modu
+
+Kaydedilmiş bir CSV oturumu uygulama içinde tekrar oynatılabilir.
+
+1. Sol panelde `CSV Replay` bölümünden `CSV Seç` butonuna basın.
+2. `logs/` klasöründeki bir telemetri CSV dosyasını seçin.
+3. Replay hızını `0.5x`, `1x`, `2x` veya `5x` olarak ayarlayın.
+4. `Replay Başlat` ile kaydedilmiş veriyi dashboard, uyarılar, ham veri monitörü ve canlı grafiklerde tekrar oynatın.
+
+Bu altyapı ileride yarış videosu üzerine telemetri bindirme için de kullanılabilir. Video kaydı ile aynı CSV oturumu eşleştirilirse RPM, hız, vites, CLT ve benzeri değerler video üzerinde gösterilebilir.
 
 ## Sıralı Telemetri Testi
 
@@ -245,8 +258,7 @@ Uyarılar hem `warningService` eşikleriyle hem de firmware'den gelen `fl` bitma
 
 ```text
 SETT Telemetri/
-├── Ana.png
-├── sim.png
+├── YeniFoto.png
 ├── main.js
 ├── preload.js
 ├── index.html
@@ -259,6 +271,7 @@ SETT Telemetri/
 │   └── services/
 │       ├── loggingService.js
 │       ├── parserService.js
+│       ├── replayService.js
 │       ├── serialService.js
 │       ├── simulationService.js
 │       └── warningService.js
@@ -272,14 +285,13 @@ SETT Telemetri/
 
 ## Bilinen Eksikler
 
-- Zaman serisi grafik ekranları
 - Gerçek CAN Bus entegrasyonunun araç üstünde tamamlanması
 - Uygulama içinden eşik ayarı düzenleme
-- CSV replay modu
 - Windows kurulum paketi
 - Otomatik yeniden bağlanma
 - E220 Packet RSSI için özel parser
 - Binary packet parser desteği
+- Video overlay/export modu (CSV replay verisini yarış videosu üstüne bindirme)
 
 ## Lisans
 

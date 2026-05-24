@@ -7,12 +7,13 @@
   <link rel="stylesheet" href="index.css">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
 </head>
 <body>
   <!-- ===== TOP BAR ===== -->
   <header id="top-bar">
     <div class="top-bar-left">
+      <img src="Logo yazısız_transparent.png" alt="SETT" class="sett-logo-topbar">
       <h1 class="app-title">SETT<span class="title-accent">TELEMETRİ</span></h1>
       <div id="simulation-badge" class="badge badge-simulation hidden">SİMÜLASYON MODU</div>
     </div>
@@ -37,6 +38,8 @@
       </div>
     </div>
     <div class="top-bar-right">
+      <button id="btn-theme-toggle" class="btn-theme-toggle" title="Tema Değiştir">🌙</button>
+      <button id="btn-settings" class="btn-topbar-icon" title="Ayarlar">⚙</button>
       <div class="status-item recording-status hidden" id="recording-status">
         <span class="recording-dot"></span>
         <span id="recording-label">REC</span>
@@ -66,6 +69,13 @@
         </div>
         <button id="btn-connect" class="btn btn-primary">Bağlan</button>
         <div class="divider"></div>
+        <div class="form-group">
+          <label for="sim-profile-select">Simülasyon Profili</label>
+          <select id="sim-profile-select">
+            <option value="race">Yarış (Race)</option>
+            <option value="stress">Stres Testi (Min/Max)</option>
+          </select>
+        </div>
         <button id="btn-simulation" class="btn btn-secondary">Simülasyon Başlat</button>
       </section>
 
@@ -80,13 +90,62 @@
         </div>
       </section>
 
-      <!-- Warnings Panel -->
-      <section class="panel" id="warnings-panel">
-        <h2 class="panel-title">Uyarılar <span class="warning-count" id="warning-count">0</span></h2>
-        <div id="warning-list" class="warning-list">
-          <div class="no-warnings">Aktif uyarı yok</div>
+      <!-- Replay Panel -->
+      <section class="panel" id="replay-panel">
+        <h2 class="panel-title">CSV Replay</h2>
+        <button id="btn-replay-select" class="btn btn-secondary">CSV Seç</button>
+        <div class="replay-info" id="replay-info">
+          <div class="log-info-row"><span>Dosya:</span><span id="replay-filename" class="mono">--</span></div>
+          <div class="log-info-row"><span>Paket:</span><span id="replay-packets" class="mono">0</span></div>
+        </div>
+        <div class="form-group replay-speed-row">
+          <label for="replay-speed-select">Replay Hızı</label>
+          <select id="replay-speed-select">
+            <option value="0.5">0.5x</option>
+            <option value="1" selected>1x</option>
+            <option value="2">2x</option>
+            <option value="5">5x</option>
+          </select>
+        </div>
+        <button id="btn-replay" class="btn btn-accent" disabled>Replay Başlat</button>
+      </section>
+
+      <!-- Session Summary Panel -->
+      <section class="panel session-panel" id="session-panel">
+        <h2 class="panel-title">Oturum Özeti</h2>
+        <div class="session-grid">
+          <div class="session-stat">
+            <span class="session-label">Kaynak</span>
+            <span class="session-value mono" id="session-source">--</span>
+          </div>
+          <div class="session-stat">
+            <span class="session-label">Paket</span>
+            <span class="session-value mono" id="session-packets">0</span>
+          </div>
+          <div class="session-stat">
+            <span class="session-label">Max Hız</span>
+            <span class="session-value mono" id="session-max-speed">0.0</span>
+          </div>
+          <div class="session-stat">
+            <span class="session-label">Max RPM</span>
+            <span class="session-value mono" id="session-max-rpm">0</span>
+          </div>
+          <div class="session-stat">
+            <span class="session-label">Max CLT</span>
+            <span class="session-value mono" id="session-max-clt">--</span>
+          </div>
+          <div class="session-stat">
+            <span class="session-label">Min Akü</span>
+            <span class="session-value mono" id="session-min-battery">--</span>
+          </div>
         </div>
       </section>
+
+      <!-- Logos (sidebar bottom) -->
+      <div class="sidebar-logos">
+        <img src="Logo yazısız_transparent.png" alt="SETT" class="sidebar-logo-sett">
+        <img src="saülogo.png" alt="Sakarya Üniversitesi" class="sidebar-logo-uni">
+      </div>
     </aside>
 
     <!-- CENTER: Dashboard -->
@@ -99,7 +158,7 @@
           <div class="card-bar"><div class="card-bar-fill" id="bar-rpm"></div></div>
         </div>
         <div class="dash-card card-speed" id="card-speed">
-          <div class="card-label">HIZI (km/h)</div>
+          <div class="card-label">HIZ (km/h)</div>
           <div class="card-value" id="val-speed">0</div>
         </div>
         <div class="dash-card card-gear" id="card-gear">
@@ -160,13 +219,58 @@
         </div>
       </div>
 
-      <!-- Row 4: Raw Monitor -->
+      <!-- Row 4: Time Series Charts -->
+      <div class="dash-row dash-row-charts">
+        <section class="panel charts-panel" id="charts-panel">
+          <div class="charts-header">
+            <h2 class="panel-title">Canlı Grafikler</h2>
+            <span class="chart-window-label">Son 60 saniye</span>
+          </div>
+          <div class="chart-grid">
+            <div class="chart-card">
+              <div class="chart-title"><span>RPM</span><span id="chart-rpm-current" class="mono">0</span></div>
+              <canvas id="chart-rpm" width="320" height="120"></canvas>
+            </div>
+            <div class="chart-card">
+              <div class="chart-title"><span>Hız</span><span id="chart-speed-current" class="mono">0.0</span></div>
+              <canvas id="chart-speed" width="320" height="120"></canvas>
+            </div>
+            <div class="chart-card">
+              <div class="chart-title"><span>CLT</span><span id="chart-clt-current" class="mono">--</span></div>
+              <canvas id="chart-clt" width="320" height="120"></canvas>
+            </div>
+            <div class="chart-card">
+              <div class="chart-title"><span>Akü</span><span id="chart-battery-current" class="mono">--</span></div>
+              <canvas id="chart-battery" width="320" height="120"></canvas>
+            </div>
+            <div class="chart-card">
+              <div class="chart-title"><span>RSSI</span><span id="chart-rssi-current" class="mono">--</span></div>
+              <canvas id="chart-rssi" width="320" height="120"></canvas>
+            </div>
+            <div class="chart-card">
+              <div class="chart-title"><span>Kayıp</span><span id="chart-loss-current" class="mono">0.0</span></div>
+              <canvas id="chart-loss" width="320" height="120"></canvas>
+            </div>
+          </div>
+        </section>
+      </div>
+
+      <!-- Row 5: Warnings -->
+      <div class="dash-row dash-row-warnings">
+        <section class="panel dashboard-warnings-panel" id="warnings-panel">
+          <h2 class="panel-title">Uyarılar <span class="warning-count" id="warning-count">0</span></h2>
+          <div id="warning-list" class="warning-list">
+            <div class="no-warnings">Aktif uyarı yok</div>
+          </div>
+        </section>
+      </div>
+
+      <!-- Row 6: Raw Monitor -->
       <div class="dash-row dash-row-raw">
         <section class="panel raw-panel" id="raw-monitor-panel">
           <div class="raw-header">
             <h2 class="panel-title">Ham Veri Monitörü</h2>
             <div class="raw-controls">
-              <label class="checkbox-label"><input type="checkbox" id="raw-autoscroll" checked> Otomatik Kaydır</label>
               <button id="btn-raw-clear" class="btn-icon" title="Temizle">🗑️</button>
             </div>
           </div>
@@ -175,6 +279,30 @@
       </div>
     </section>
   </main>
+
+  <div id="settings-overlay" class="settings-overlay hidden" aria-hidden="true">
+    <section class="settings-modal" role="dialog" aria-modal="true" aria-labelledby="settings-title">
+      <header class="settings-header">
+        <div>
+          <h2 id="settings-title">Uyarı Eşik Ayarları</h2>
+          <p>Değerler kaydedildikten sonra yeni telemetri paketlerinde geçerli olur.</p>
+        </div>
+        <button id="btn-settings-close" class="btn-icon settings-close" title="Kapat">×</button>
+      </header>
+      <form id="settings-form" class="settings-form">
+        <div id="settings-grid" class="settings-grid"></div>
+        <div class="settings-footer">
+          <span id="settings-status" class="settings-status"></span>
+          <div class="settings-actions">
+            <button type="button" id="btn-settings-reset" class="btn btn-secondary">Varsayılan</button>
+            <button type="submit" id="btn-settings-save" class="btn btn-primary">Kaydet</button>
+          </div>
+        </div>
+      </form>
+    </section>
+  </div>
+
+
 
   <script src="renderer.js"></script>
 </body>

@@ -7,8 +7,32 @@ const DEFAULTS = require('../config/defaults');
 // Uyarı seviyeleri
 const LEVEL = { INFO: 'INFO', WARNING: 'WARNING', CRITICAL: 'CRITICAL' };
 
+function cloneSettings(settings) {
+  return JSON.parse(JSON.stringify(settings));
+}
+
+function mergeWarningSettings(overrides) {
+  const merged = cloneSettings(DEFAULTS.warnings);
+  if (!overrides || typeof overrides !== 'object') return merged;
+
+  Object.keys(merged).forEach((groupKey) => {
+    const group = merged[groupKey];
+    const overrideGroup = overrides[groupKey];
+    if (!group || !overrideGroup || typeof overrideGroup !== 'object') return;
+
+    Object.keys(group).forEach((settingKey) => {
+      if (typeof group[settingKey] !== 'number') return;
+      const nextValue = Number(overrideGroup[settingKey]);
+      if (Number.isFinite(nextValue)) group[settingKey] = nextValue;
+    });
+  });
+
+  return merged;
+}
+
 class WarningService {
-  constructor() {
+  constructor(warningSettings) {
+    this.warningSettings = mergeWarningSettings(warningSettings);
     this.activeWarnings = [];
     this.warningHistory = [];
     this.lastPacketTime = Date.now();
@@ -24,7 +48,7 @@ class WarningService {
    */
   evaluate(packet) {
     const warnings = [];
-    const w = DEFAULTS.warnings;
+    const w = this.warningSettings;
     const now = Date.now();
     this.lastPacketTime = now;
 
@@ -94,6 +118,12 @@ class WarningService {
         warnings.push({ level: LEVEL.WARNING, code: 'AFR_RICH_W', message: `${w.afr.label}: ${packet.afr.toFixed(1)} - Zengin karışım` });
     }
 
+    const packetLossPercent = this.getPacketLossPercent();
+    if (packetLossPercent >= w.packetLoss.criticalPercent)
+      warnings.push({ level: LEVEL.CRITICAL, code: 'PACKET_LOSS_CRITICAL', message: `${w.packetLoss.label}: ${packetLossPercent.toFixed(1)}% ≥ ${w.packetLoss.criticalPercent}%` });
+    else if (packetLossPercent >= w.packetLoss.warningPercent)
+      warnings.push({ level: LEVEL.WARNING, code: 'PACKET_LOSS_HIGH', message: `${w.packetLoss.label}: ${packetLossPercent.toFixed(1)}% ≥ ${w.packetLoss.warningPercent}%` });
+
     // Timestamp ekle
     warnings.forEach(w => { w.timestamp = now; });
 
@@ -113,7 +143,7 @@ class WarningService {
    */
   checkDataTimeout() {
     const elapsed = Date.now() - this.lastPacketTime;
-    const w = DEFAULTS.warnings.noData;
+    const w = this.warningSettings.noData;
     if (elapsed >= w.criticalMs)
       return { level: LEVEL.CRITICAL, code: 'NO_DATA', message: `${w.label}: ${(elapsed/1000).toFixed(1)}s boyunca veri gelmedi!`, timestamp: Date.now() };
     if (elapsed >= w.warningMs)
@@ -133,6 +163,17 @@ class WarningService {
 
   getActiveWarnings() { return this.activeWarnings; }
   getWarningHistory() { return this.warningHistory; }
+  getSettings() { return cloneSettings(this.warningSettings); }
+
+  updateSettings(settings) {
+    this.warningSettings = mergeWarningSettings(settings);
+    return this.getSettings();
+  }
+
+  resetSettings() {
+    this.warningSettings = mergeWarningSettings();
+    return this.getSettings();
+  }
 
   reset() {
     this.activeWarnings = [];
@@ -144,4 +185,4 @@ class WarningService {
   }
 }
 
-module.exports = { WarningService, LEVEL };
+module.exports = { WarningService, LEVEL, mergeWarningSettings };

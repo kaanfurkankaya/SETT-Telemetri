@@ -138,6 +138,46 @@ SETT-SAU Formula Student takımı için içten yanmalı (CV/ICE) araç pit telem
   - `AI_DEVELOPMENT_LOG.md`
 - **Açıklama:** Simülasyon modunun testlerde yetersiz kalması (değerlerin birbirini etkilememesi ve random zıplamalar) nedeniyle **Race Simulation Mode** (Yarış Simülasyon Modu) geliştirildi. Simülasyon artık bir state-machine olarak çalışıyor (IDLE, LAUNCH, ACCELERATION, BRAKING, vb.). Araç davranışları fiziksel bir ilişkiyle bağlandı: TPS artınca ivme artar, ivme hızı artırır, hız ve vites rpm'i belirler, rpm ve tps yükü belirler, yük harareti (CLT) belirler. Uyarı senaryoları test edilebilmesi için aşırı yükte hararet yükselir veya akü voltajı düşer. Data source olarak `SIM_RACE` gönderiliyor. Mod 10 Hz (100ms) interval ile çalışıyor. Kalan TODO'lar aynı (Gerçek CAN entegrasyonu, grafikler, ayarlar paneli, paketleme).
 
+### Change 008 - Açık Tema Tasarımı, Logolar ve Stres Testi Profilinin Eklenmesi
+- **Tarih:** 2026-05-23
+- **Değişen dosyalar:**
+  - `index.css`: Koyu temadan #ff9500 (turuncu) ve #ffffff (beyaz/açık gri) tabanlı açık temaya geçildi. CSS değişkenleri ile Açık/Koyu tema (`body.dark-mode`) desteği eklendi. Üniversite logosu eklendi ve boyutu 110px'e çıkarıldı.
+  - `index.html`: Sağ altta üniversite logosu (`saülogo.png`) ve SETT logosu yan yana konuldu. Üst barda tema değiştirme butonu ve sol panele "Simülasyon Profili" seçici (dropdown) eklendi. Nunito fontu projeye entegre edildi.
+  - `renderer.js`: `localStorage` kullanan tema değiştirme (karanlık/aydınlık) mantığı eklendi. Simülasyon durduğunda (`offline` veya `error` state) ekrandaki verileri sıfırlayan (0 veya -- yapan) `resetDashboard()` fonksiyonu yazıldı. Simülasyon profili seçimi backend'e bağlandı.
+  - `preload.js`: `simulation.start(profile)` parametrik hale getirildi.
+  - `main.js`: `simulation:start` kanalından gelen profil bilgisi `simulationService`'e aktarıldı.
+  - `src/services/simulationService.js`: Sınıfa `profile` desteği eklendi. Tüm veri aralıklarını minimumdan maksimuma bir sinüs dalgası (`Math.sin`) ile sweep eden ve uyarı mekanizmalarının tamamını tetikleyen yeni `_updateStressLogic()` stres testi eklendi.
+
+### Change 009 - Canlı Grafikler ve CSV Replay Altyapısı
+- **Tarih:** 2026-05-23
+- **Değişen dosyalar:**
+  - `index.html`: Dashboard'a "Canlı Grafikler" bölümü eklendi. RPM, hız, CLT, akü, RSSI ve paket kaybı için son 60 saniyeyi gösteren canvas tabanlı mini grafikler yerleştirildi. Sol panele CSV replay seçimi, replay hızı ve başlat/durdur kontrolleri eklendi.
+  - `index.css`: Grafik grid'i, chart kartları, replay paneli ve `replay` bağlantı durumu görsel stilleri eklendi.
+  - `renderer.js`: Telemetri paketleri için 60 saniyelik geçmiş buffer'ı, canvas çizim fonksiyonları, dashboard reset'inde grafik temizleme ve CSV replay UI akışı eklendi.
+  - `preload.js`: `sett.replay` IPC köprüsü eklendi.
+  - `main.js`: `ReplayService` bağlandı. CSV seçme, replay başlatma/durdurma/durum IPC kanalları eklendi. Veri zaman aşımı uyarısı sadece aktif seri bağlantı, simülasyon veya replay varken çalışacak şekilde düzeltildi.
+  - `src/services/replayService.js`: CSV log dosyasını okuyup satırları mevcut JSON-line telemetri hattına yeniden veren servis eklendi. Replay hızları 0.5x, 1x, 2x ve 5x üzerinden UI'dan seçiliyor.
+  - `src/services/simulationService.js`: Simülasyon başlangıcında state sıfırlama eklendi ve stres profilinde veri kaynağı `SIM_STRESS` olarak ayrıldı.
+- **Not:** CSV replay özelliği ileride yarış videosu üzerine telemetri bindirme (video overlay) için veri kaynağı olarak kullanılabilir.
+
+### Change 010 - Alt Dashboard Alanı ve 320 km/h Yarış Simülasyonu
+- **Tarih:** 2026-05-23
+- **Değişen dosyalar:**
+  - `index.html`: Ham veri monitörü satırına "Oturum Özeti" paneli eklendi. Kaynak, paket, max hız, max RPM, max CLT ve min akü değerleri gösteriliyor.
+  - `index.css`: Ham veri monitörü daha dengeli genişlikte tutuldu, özet paneli için kompakt kart stili eklendi.
+  - `renderer.js`: Oturum istatistikleri canlı telemetriyle güncellenecek ve bağlantı resetinde sıfırlanacak şekilde eklendi. Hız grafiği 320 km/h ölçeğine çıkarıldı.
+  - `src/services/simulationService.js`: Yarış simülasyonundaki vites oranları 6. viteste yaklaşık 320 km/h tepe hıza göre yeniden ayarlandı. Hız-devir ilişkisi `speed / gearMaxSpeed * REDLINE_RPM` mantığına bağlandı. Simülasyon paketine `rssi` alanı da eklendi.
+- **Test:** 120 saniyelik hızlı simülasyon smoke testinde max hız yaklaşık 319.5 km/h, max RPM yaklaşık 12,499 ve max vites 6 görüldü.
+
+### Change 011 - Uyarı Görünümü, Eşik Ayarları ve README Görsel Güncellemesi
+- **Tarih:** 2026-05-24
+- **Değişen dosyalar:**
+  - `index.html`: Üst bara ayarlar butonu ve uyarı eşiklerini düzenleyen modal eklendi. README görseli `YeniFoto.png` ile güncellendi.
+  - `index.css`: Uyarı kartları daha okunur, kompakt ve scrollsuz olacak şekilde yeniden düzenlendi. Ayarlar modalı için stiller eklendi.
+  - `renderer.js`: Uyarı eşik ayarları formu, doğrulama, kaydetme/varsayılan akışı ve dashboard kartlarının dinamik eşiklere göre renklendirilmesi eklendi.
+  - `main.js`, `preload.js`: Uyarı eşiklerini okuma, kaydetme ve sıfırlama IPC uçları eklendi.
+  - `src/services/warningService.js`: Uyarı servisi varsayılan eşikleri kopyalayıp runtime ayarlarıyla güncelleyebilir hale getirildi. Paket kaybı eşikleri de aktif uyarı değerlendirmesine bağlandı.
+
 
 ## 6. Dosya Haritası
 
@@ -152,6 +192,7 @@ SETT-SAU Formula Student takımı için içten yanmalı (CV/ICE) araç pit telem
 | `src/services/serialService.js` | COM port haberleşme (Node.js serialport) |
 | `src/services/parserService.js` | JSON-line parser (strategy pattern) |
 | `src/services/simulationService.js` | Sahte telemetri üretimi (test modu) |
+| `src/services/replayService.js` | CSV log dosyalarını tekrar oynatma |
 | `src/services/warningService.js` | Eşik tabanlı uyarı/hata mantığı |
 | `src/services/loggingService.js` | CSV dosya loglama |
 | `src/config/defaults.js` | Tüm eşikler, ayarlar, varsayılan değerler |
@@ -216,9 +257,9 @@ npm start
 ## 10. Bilinen Eksikler ve TODO
 
 1. [ ] `npm install` ve ilk çalıştırma testi yapılacak
-2. [ ] Grafik görünümleri (zaman serisi grafikleri)
-3. [ ] Ayarlar paneli (UI üzerinden eşik düzenleme)
-4. [ ] Veri replay modu (CSV'den playback)
+2. [x] Grafik görünümleri (zaman serisi grafikleri)
+3. [x] Ayarlar paneli (UI üzerinden eşik düzenleme)
+4. [x] Veri replay modu (CSV'den playback)
 5. [ ] Electron packaging (EXE oluşturma)
 6. [ ] Otomatik yeniden bağlanma mekanizması
 7. [ ] Binary packet parser desteği
