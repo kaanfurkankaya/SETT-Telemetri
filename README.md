@@ -65,6 +65,18 @@ Geliştirme modunda başlatmak için:
 npm run dev
 ```
 
+### Windows kurulum paketi
+
+```bash
+npm run dist
+```
+
+Komut Windows için NSIS tabanlı kurulum dosyasını `dist/` klasörüne üretir. Sadece paketlenmiş klasör üretmek için:
+
+```bash
+npm run pack
+```
+
 ## Kullanım
 
 ### Simülasyon modu
@@ -83,6 +95,14 @@ Dashboard'daki `Canlı Grafikler` bölümü son 60 saniyelik telemetri geçmişi
 - RPM, hız, CLT, akü, RSSI ve paket kaybı aynı ekranda izlenir.
 - Grafikler gerçek seri port, simülasyon ve CSV replay verisinde aynı şekilde çalışır.
 - Test sırasında ani kopma, hararet yükselişi veya batarya düşüşü tek anlık sayı yerine zaman içindeki eğilimiyle görülebilir.
+
+### Bağlantı sağlık paneli
+
+`LINK HEALTH` kartı LoRa/telemetri bağlantısının durumunu tek bakışta özetler.
+
+- RSSI, paket kaybı, paket hızı ve son veri yaşı aynı kartta gösterilir.
+- RSSI ve paket kaybı eşikleri ayarlar panelindeki uyarı değerlerini kullanır.
+- Veri gecikmesi veya kesilmesi olduğunda kart `GECIKME` ya da `VERI YOK` durumuna geçer.
 
 ### Gerçek ESP32 ile kullanım
 
@@ -298,8 +318,6 @@ SETT Telemetri/
 ## Bilinen Eksikler
 
 - Gerçek CAN Bus entegrasyonunun araç üstünde tamamlanması
-- Uygulama içinden eşik ayarı düzenleme
-- Windows kurulum paketi
 - Otomatik yeniden bağlanma
 - E220 Packet RSSI için özel parser
 - Binary packet parser desteği

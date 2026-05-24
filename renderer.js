@@ -12,6 +12,8 @@ let isRecording = false;
 let rawLines = [];
 let sessionStats = createSessionStats();
 let warningSettings = null;
+let lastTelemetryAt = null;
+let latestLinkMetrics = createLinkMetrics();
 const MAX_RAW_LINES = 3;
 const CHART_WINDOW_MS = 60000;
 
@@ -128,6 +130,14 @@ const valLoss = $('val-loss');
 const barRpm = $('bar-rpm');
 const barTps = $('bar-tps');
 
+// Link health
+const cardLinkHealth = $('card-link-health');
+const valLinkHealth = $('val-link-health');
+const linkRssi = $('link-rssi');
+const linkLoss = $('link-loss');
+const linkRate = $('link-rate');
+const linkAge = $('link-age');
+
 // Session summary
 const sessionSource = $('session-source');
 const sessionPackets = $('session-packets');
@@ -209,6 +219,8 @@ function init() {
 
   drawCharts();
   updateSessionSummary(null);
+  updateLinkHealth();
+  setInterval(updateLinkHealth, 1000);
 }
 
 // ===== Theme =====
@@ -631,13 +643,17 @@ function resetDashboard() {
   updateWarningsList([]);
   resetCharts();
   sessionStats = createSessionStats();
+  lastTelemetryAt = null;
+  latestLinkMetrics = createLinkMetrics();
   updateSessionSummary(null);
+  updateLinkHealth();
 }
 
 // ===== Telemetry Data Update =====
 function handleTelemetryData(data) {
   const p = data.packet;
   const warnings = data.warnings || [];
+  lastTelemetryAt = Date.now();
 
   // Hero values
   valRpm.textContent = p.rpm !== null ? Math.round(p.rpm).toLocaleString() : '--';
@@ -672,6 +688,11 @@ function handleTelemetryData(data) {
   // Packet rate, RSSI & Data Source
   packetRateEl.textContent = data.packetRate || '0';
   rssiValueEl.textContent = p.rssi !== null ? p.rssi : '--';
+  latestLinkMetrics = {
+    rssi: numberOrNull(p.rssi),
+    packetLoss: numberOrNull(data.packetLoss) ?? 0,
+    packetRate: numberOrNull(data.packetRate) ?? 0,
+  };
   
   if (p.data_source) {
     dataSourceContainer.style.display = 'flex';
@@ -683,6 +704,7 @@ function handleTelemetryData(data) {
   pushChartSample(p, parseFloat(valLoss.textContent) || 0);
   drawCharts();
   updateSessionSummary(p);
+  updateLinkHealth();
 
   // Card state styling
   const thresholds = getWarningSettings();
@@ -758,6 +780,58 @@ function updateSessionSummary(packet) {
   sessionMaxRpm.textContent = Math.round(sessionStats.maxRpm).toLocaleString();
   sessionMaxClt.textContent = sessionStats.maxClt === null ? '--' : sessionStats.maxClt.toFixed(1);
   sessionMinBattery.textContent = sessionStats.minBattery === null ? '--' : sessionStats.minBattery.toFixed(2);
+}
+
+function createLinkMetrics() {
+  return {
+    rssi: null,
+    packetLoss: 0,
+    packetRate: 0,
+  };
+}
+
+function updateLinkHealth() {
+  const thresholds = getWarningSettings();
+  const hasActiveSource = isConnected || isSimulation || isReplay;
+  const ageMs = lastTelemetryAt ? Date.now() - lastTelemetryAt : null;
+  const rssi = latestLinkMetrics.rssi;
+  const packetLoss = latestLinkMetrics.packetLoss;
+  const packetRate = latestLinkMetrics.packetRate;
+  let status = 'BEKLEME';
+  let state = '';
+
+  if (!hasActiveSource) {
+    status = 'BEKLEME';
+  } else if (ageMs === null || ageMs >= thresholds.noData.criticalMs) {
+    status = 'VERI YOK';
+    state = 'state-critical';
+  } else if (ageMs >= thresholds.noData.warningMs || packetRate <= 0) {
+    status = 'GECIKME';
+    state = 'state-warning';
+  } else if (
+    (rssi !== null && rssi <= thresholds.rssi.criticalLow) ||
+    packetLoss >= thresholds.packetLoss.criticalPercent
+  ) {
+    status = 'KRITIK';
+    state = 'state-critical';
+  } else if (
+    (rssi !== null && rssi <= thresholds.rssi.warningLow) ||
+    packetLoss >= thresholds.packetLoss.warningPercent
+  ) {
+    status = 'ZAYIF';
+    state = 'state-warning';
+  } else {
+    status = 'OK';
+    state = 'state-ok';
+  }
+
+  cardLinkHealth.className = 'dash-card card-status card-link-health' + (state ? ' ' + state : '');
+  valLinkHealth.className = 'card-value link-health-value' + (state === 'state-critical' ? ' val-critical' : state === 'state-warning' ? ' val-warning' : state === 'state-ok' ? ' val-ok' : '');
+  valLinkHealth.textContent = status;
+  linkRssi.textContent = rssi === null ? '--' : `${Math.round(rssi)}`;
+  linkLoss.textContent = `${packetLoss.toFixed(1)}%`;
+  linkRate.textContent = Number(packetRate).toFixed(1);
+  linkAge.textContent = ageMs === null ? '--' : ageMs < 1000 ? '<1s' : `${Math.floor(ageMs / 1000)}s`;
 }
 
 function applyCardState(card, value, warnThreshold, critThreshold, direction) {

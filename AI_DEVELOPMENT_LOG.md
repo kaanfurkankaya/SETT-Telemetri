@@ -178,6 +178,15 @@ SETT-SAU Formula Student takımı için içten yanmalı (CV/ICE) araç pit telem
   - `main.js`, `preload.js`: Uyarı eşiklerini okuma, kaydetme ve sıfırlama IPC uçları eklendi.
   - `src/services/warningService.js`: Uyarı servisi varsayılan eşikleri kopyalayıp runtime ayarlarıyla güncelleyebilir hale getirildi. Paket kaybı eşikleri de aktif uyarı değerlendirmesine bağlandı.
 
+### Change 012 - Link Health ve Windows Paketleme
+- **Tarih:** 2026-05-24
+- **Değişen dosyalar:**
+  - `index.html`: Durum kartları satırına `LINK HEALTH` kartı eklendi.
+  - `index.css`: Link health kartı için kompakt metrik grid'i ve durum renkleri eklendi.
+  - `renderer.js`: RSSI, paket kaybı, paket hızı ve son veri yaşını izleyen bağlantı sağlığı hesabı eklendi. Veri gecikmesi/kesilmesi ayarlar panelindeki `noData` eşiklerini kullanıyor.
+  - `package.json`, `package-lock.json`: `electron-builder` eklendi. `npm run pack` ve `npm run dist` komutları tanımlandı.
+  - `.gitignore`: `dist/` çıktı klasörü ignore edildi.
+
 
 ## 6. Dosya Haritası
 
