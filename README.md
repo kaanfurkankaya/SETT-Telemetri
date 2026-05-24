@@ -4,9 +4,19 @@ SETT-SAU Formula Student takımının pit tarafında kullandığı Electron taba
 
 Araç üzerindeki ESP32 telemetri kartı CAN/sensör verilerini E220 LoRa modülü ile pit tarafına gönderir. Pit tarafındaki ESP32 alıcı kart bu veriyi USB seri port üzerinden uygulamaya aktarır. Uygulama canlı değerleri gösterir, uyarıları takip eder ve oturumları CSV olarak kaydeder.
 
-## Ekran Görüntüsü
+## Ekran Görüntüleri
+
+### Ana ekran
 
 <img src="YeniFoto.png" alt="SETT Telemetri güncel arayüz" width="100%">
+
+### Simülasyon modu
+
+<img src="YeniSim.png" alt="SETT Telemetri simülasyon modu" width="100%">
+
+### Uyarı eşik ayarları
+
+<img src="Ayarlar.png" alt="SETT Telemetri ayarlar paneli" width="100%">
 
 ## Bağlantılı Repo
 
@@ -258,7 +268,9 @@ Uyarılar hem `warningService` eşikleriyle hem de firmware'den gelen `fl` bitma
 
 ```text
 SETT Telemetri/
+├── Ayarlar.png
 ├── YeniFoto.png
+├── YeniSim.png
 ├── main.js
 ├── preload.js
 ├── index.html
